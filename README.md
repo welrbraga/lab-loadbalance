@@ -7,6 +7,7 @@ Clone este repositório em sua máquina e execute os passos abaixo para simular 
 Estes servidores WEB são idênticos em seu conteúdo e não tiveram qualquer modificação na sua configuração. Durante a construção foi adicionado um arquivo texto dentro do DocumentRoot que será usado nos testes de requisição.
 
  docker build -t s1 -f Dockerfile.1 .
+ 
  docker build -t s2 -f Dockerfile.2 .
 
 ## Contrução da imagem de um servidor Nginx como loadbalancer
@@ -27,8 +28,10 @@ Originalmente o Docker usa a rede padrão "bridge" para comunicação entre cont
 
 É aqui que a brincadeira começa. Você vai subir os três containeres, respectivamente nas portas 81, 82 e 83.
 
- docker run -tid --name s1_1 --network load-balance -p 81:80 s1 
+ docker run -tid --name s1_1 --network load-balance -p 81:80 s1
+ 
  docker run -tid --name s2_1 --network load-balance -p 82:80 s2
+ 
  docker run -tid --name lb_1 --network load-balance -p 83:80 lb
 
 
@@ -61,16 +64,22 @@ você deverá notar que enquanto um dos servidores estiver fora o tráfego é to
 Você pode usar os comandos abaixo para interromper os containeres a qualquer momento.
 
  docker stop s1_1
+ 
  docker stop s2_1
+ 
  docker stop lb_1
+ 
 
 ## Destruindo o ambiente
 
 Quando a brincadeira estiver chata você pode quebrar tudo e jogar fora (comandos abaixo) :-) Caso você se arrependa é só reconstruir os containeres novamente.
 
  docker rm s1_1
+ 
  docker rm s2_1
+ 
  docker rm lb_1
+ 
 
 Se quiser dar uma faxina geral e remover as imagens também use os comandos a seguir:
 
