@@ -2,16 +2,19 @@
 
 Clone este repositório em sua máquina e execute os passos abaixo para simular um ambiente web com dois servidores de conteúdo e um balanceador de carga.
 
+```
  git clone https://github.com/welrbraga/lab-loadbalance.git
  cd lab-loadbalance
+```
 
 ## Construção das duas imagens de servidores Web Apache
 
 Estes servidores WEB são idênticos em seu conteúdo e não tiveram qualquer modificação na sua configuração. Durante a construção foi adicionado um arquivo texto dentro do DocumentRoot que será usado nos testes de requisição.
 
+```
  docker build -t s1 -f Dockerfile.1 .
- 
  docker build -t s2 -f Dockerfile.2 .
+```
 
 Na verdade eu poderia ter criado apenas um Dockerfile para construir ambas as imagens, mas eu optei pela simplicidade para que aspirantes a usuários de Docker se sintam mais confortáveis ao ler o conteúdo destes arquivos.
 
@@ -21,7 +24,9 @@ Também poderia ter criado 3, 10 100 ou mil imagens da mesma forma, o que aument
 
 Este servidor Nginx teve sua configuração padrão (/etc/nginx/nginx.conf) modificada para servir como loadbalancer ao invés um "servidor de páginas". Consulte o arquivo nginx.conf neste repositório para entender a configuração.
 
+```
  docker build -t lb -f Dockerfile.lb .
+```
 
 Aqui estamos trabalhando de forma bem rudimentar em modo HTTP, mas seria exatamente aqui que colocariamos o nosso certificado SSL, caso fosse necessário operar em HTTPS.
 
@@ -31,7 +36,9 @@ Se você criar mais do que os dois containeres WEB, edite o arquivo nginx.conf e
 
 Originalmente o Docker usa a rede padrão "bridge" para comunicação entre containeres que tenham especificado o enlace entre si com o parâmetro "--link", no entanto este modo não é mais recomendado devendo então ser criada uma rede interna para comunicação entre containers.
 
+```
  docker network create load-balance
+```
 
 Eu nomeei a rede como "load-balance", mas o nome não importa, poderia ser qualquer outro termo, palavbra ou sigla, desde que adiante eu eu altere este nome também quando for subir os meus conteineres.
 
@@ -39,6 +46,7 @@ Eu nomeei a rede como "load-balance", mas o nome não importa, poderia ser qualq
 
 É aqui que a brincadeira começa. Você vai subir os três containeres, respectivamente nas portas 81, 82 e 83. Se você criou mais do que 3 imagens deverá adicionar todas elas a esta rede.
 
+```
  #Servidor WEB 1 (porta 81)
  docker run -tid --name s1_1 --network load-balance -p 81:80 s1
  
@@ -47,6 +55,7 @@ Eu nomeei a rede como "load-balance", mas o nome não importa, poderia ser qualq
  
  #Balanceador de carga (porta 83)
  docker run -tid --name lb_1 --network load-balance -p 83:80 lb
+```
 
 ## Teste rápido
 
@@ -60,7 +69,9 @@ Você já deve estar com uma janela de comandos aberta, onde está digitando os 
 
 Agora, em uma das janelas de terminal rode o comando abaixo:
 
+```
  for (( i=0 ; i<10000 ; i++ )) ; do echo -n $i " - " ; curl http://localhost:83/teste.txt ; done
+```
 
 Isso vai simular 10000 consultas aos seus servidores web a partir do loadbalancer. Observe como "SERVER1" e "SERVER2" se alternam. Isso mostra que o seu load-balancer está distribuindo as conexões entre os dois servidores web, como era de se esperar.
 
@@ -72,13 +83,17 @@ Enquanto os "visitantes" estão navegando no seu site vamos tirar um servidor do
 
 Com o comando anterior rodando, em uma janela de terminal, na outra cole o comandos abaixo e observe na janela anterior o que vai acontecer com as conexões:
 
+```
  docker stop s1_1 ; sleep 10s ; docker start s1_1
+```
 
 Nós paramos o servidor 1 por 10 segundos. Com ele fora do ar, nosso loadbalancer redireciona todos os acesso para o unico servidor disponível que é o SERVER 2.
 
 Aguarde que o ambiente normalize os servidores voltem a responder alternadamente e agora vamos fazer o mesmo com o outro servidor:
 
+```
  docker stop s2_1 ; sleep 10s ; docker start s2_1
+```
 
 Desta vez tiramos do ar o servidor 2, então todo o tráfego deve estar sendo direcionado ao servidor 1, até que ele volte a ativa.
 
@@ -96,29 +111,29 @@ Não vou descrever aqui o processo completo, mas experimente copiar e editar o a
 
 Você pode usar os comandos abaixo para interromper os containeres a qualquer momento. Com isso você estará liberando recursos da sua máquina.
 
+```
  docker stop s1_1
- 
  docker stop s2_1
- 
  docker stop lb_1
+```
 
 ## Destruindo o ambiente
 
 Quando a brincadeira estiver chata você pode quebrar tudo e jogar fora (comandos abaixo) :-) Isso vai remover os containeres de sua máquina, mas não se preocupe, caso você se arrependa é só reconstrui-los novamente.
 
+```
  docker rm s1_1
- 
  docker rm s2_1
- 
  docker rm lb_1
+```
 
 Se quiser dar uma faxina geral e remover as imagens também use os comandos a seguir:
 
+```
  docker image rm s1
- 
  docker image rm s2
- 
  docker image rm lb
+```
 
 ## Referência
 
